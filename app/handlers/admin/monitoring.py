@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import structlog
 from aiogram import F, Router
@@ -187,7 +187,7 @@ def _build_notification_settings_view(language: str):
 
 def _build_notification_preview_message(language: str, notification_type: str):
     texts = get_texts(language)
-    now = datetime.now()
+    now = datetime.now(UTC)
     price_30_days = settings.format_price(settings.PRICE_30_DAYS)
 
     from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
@@ -839,21 +839,18 @@ async def force_check_callback(callback: CallbackQuery):
         async with AsyncSessionLocal() as db:
             results = await monitoring_service.force_check_subscriptions(db)
 
-            text = texts.t(
-                'ADMIN_MONITORING_FORCE_CHECK_RESULT',
-                '✅ <b>Принудительная проверка завершена</b>\n\n'
-                '📊 <b>Результаты проверки:</b>\n'
-                '• Истекших подписок: {expired}\n'
-                '• Истекающих подписок: {expiring}\n'
-                '• Готовых к автооплате: {autopay_ready}\n\n'
-                '🕐 <b>Время проверки:</b> {checked_at}\n\n'
-                'Нажмите "Назад" для возврата в меню мониторинга.\n',
-            ).format(
-                expired=results['expired'],
-                expiring=results['expiring'],
-                autopay_ready=results['autopay_ready'],
-                checked_at=datetime.now().strftime('%H:%M:%S'),
-            )
+            text = f"""
+✅ <b>Принудительная проверка завершена</b>
+
+📊 <b>Результаты проверки:</b>
+• Истекших подписок: {results['expired']}
+• Истекающих подписок: {results['expiring']}
+• Готовых к автооплате: {results['autopay_ready']}
+
+🕐 <b>Время проверки:</b> {datetime.now(UTC).strftime('%H:%M:%S')}
+
+Нажмите "Назад" для возврата в меню мониторинга.
+"""
 
             from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -1216,7 +1213,7 @@ async def monitoring_statistics_callback(callback: CallbackQuery):
             sub_stats = await get_subscriptions_statistics(db)
             mon_status = await monitoring_service.get_monitoring_status(db)
 
-            week_ago = datetime.now() - timedelta(days=7)
+            week_ago = datetime.now(UTC) - timedelta(days=7)
             week_logs = await monitoring_service.get_monitoring_logs(db, limit=1000)
             week_logs = [log for log in week_logs if log['created_at'] >= week_ago]
 
