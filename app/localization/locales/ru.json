@@ -850,6 +850,10 @@
   "ADMIN_TICKET_UNKNOWN_USER_NAME": "Unknown",
   "ADMIN_TICKET_UNBLOCK_SUCCESS": "✅ Блок снят",
   "ADMIN_TICKET_USERNAME_MISSING": "отсутствует",
+  "ADMIN_TICKET_MESSAGE_SENDER_SUPPORT": "🛠️ Поддержка",
+  "ADMIN_TICKET_MESSAGE_SENDER_USER": "👤 Пользователь",
+  "ADMIN_TICKET_TELEGRAM_ID_LABEL": "Telegram ID",
+  "ADMIN_TICKET_UNBLOCK_SUCCESS": "✅ Блок снят",
   "ADMIN_TICKET_VIEW_BLOCK_UNTIL_LINE": "⏳ Блок до: {block_until}\n\n",
   "ADMIN_TICKET_VIEW_BLOCK_UNTIL_LINE_NO_SPACING": "⏳ Блок до: {block_until}\n",
   "ADMIN_TICKET_VIEW_BLOCKED_PERMANENT_IN_TICKET_LINE": "🚫 Пользователь заблокирован навсегда для ответов в этом тикете\n",
@@ -4550,4 +4554,5 @@
   "SUBSCRIPTION_CART_CLEAR_BUTTON": "🗑️ Очистить корзину",
   "TRAFFIC_PACKAGE_GB_BUTTON": "📊 {gb} ГБ - {price}",
   "TRAFFIC_RESET_CONFIRM_WITH_PRICE_BUTTON": "✅ Сбросить за {price}"
+  "ADMIN_PROMO_OFFER_INVALID_IDENTIFIER": "❌ Неверный идентификатор"
 }
