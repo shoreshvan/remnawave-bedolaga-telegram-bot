@@ -914,7 +914,9 @@ async def handle_ticket_reply(message: types.Message, state: FSMContext, db_user
 
         # Уведомить админов об ответе пользователя
         logger.info('Attempting to notify admins about ticket reply #', ticket_id=ticket_id)
-        await notify_admins_about_ticket_reply(ticket, reply_text, db)
+        await notify_admins_about_ticket_reply(
+            ticket, reply_text, db, media_file_id=media_file_id, media_type=media_type
+        )
 
     except Exception as e:
         logger.error('Error adding ticket reply', error=e)
@@ -1025,7 +1027,6 @@ async def notify_admins_about_new_ticket(ticket: Ticket, db: AsyncSession):
         if len(title) > 60:
             title = title[:57] + '...'
 
-        # Загрузим пользователя, чтобы отобразить реальный Telegram ID и username
         try:
             user = await get_user_by_id(db, ticket.user_id)
         except Exception:
@@ -1054,10 +1055,11 @@ async def notify_admins_about_new_ticket(ticket: Ticket, db: AsyncSession):
             created_at=format_local_datetime(ticket.created_at, '%d.%m.%Y %H:%M'),
         )
 
-        # Клавиатура с быстрыми действиями для админов в топике
-        # Отправляем через общий сервис админ-уведомлений (поддерживает топики)
-        # bot доступен из Dispatcher в middlewares; безопаснее взять из уже используемого контекста
-        # Здесь используем lazy импорт из maintenance_service, где хранится бот
+        if message_preview:
+            notification_text += f'\n📩 <b>Сообщение:</b>\n{message_preview}\n'
+
+        notification_text += f'\n📅 <b>Создан:</b> {format_local_datetime(ticket.created_at, "%d.%m.%Y %H:%M")}\n'
+
         from app.services.maintenance_service import maintenance_service
 
         bot = maintenance_service._bot or None
@@ -1066,12 +1068,21 @@ async def notify_admins_about_new_ticket(ticket: Ticket, db: AsyncSession):
             return
 
         service = AdminNotificationService(bot)
-        await service.send_ticket_event_notification(notification_text, None)
+        await service.send_ticket_event_notification(
+            notification_text, None, media_file_id=media_file_id, media_type=media_type
+        )
     except Exception as e:
         logger.error('Error notifying admins about new ticket', error=e)
 
 
-async def notify_admins_about_ticket_reply(ticket: Ticket, reply_text: str, db: AsyncSession):
+async def notify_admins_about_ticket_reply(
+    ticket: Ticket,
+    reply_text: str,
+    db: AsyncSession,
+    *,
+    media_file_id: str | None = None,
+    media_type: str | None = None,
+):
     """Уведомить админов об ответе пользователя на тикет"""
     logger.info('notify_admins_about_ticket_reply called for ticket #', ticket_id=ticket.id)
     try:
@@ -1086,7 +1097,6 @@ async def notify_admins_about_ticket_reply(ticket: Ticket, reply_text: str, db: 
         if len(title) > 60:
             title = title[:57] + '...'
 
-        # Загрузим пользователя
         try:
             user = await get_user_by_id(db, ticket.user_id)
         except Exception:
@@ -1097,8 +1107,7 @@ async def notify_admins_about_ticket_reply(ticket: Ticket, reply_text: str, db: 
             user.username if user and user.username else texts.t('ADMIN_TICKET_USERNAME_MISSING', 'отсутствует')
         )
 
-        # Обрезаем текст ответа для уведомления
-        reply_preview = reply_text[:150] + '...' if len(reply_text) > 150 else reply_text
+        reply_preview = reply_text[:200] + '...' if len(reply_text) > 200 else reply_text
 
         notification_text = texts.t(
             'ADMIN_TICKET_REPLY_NOTIFICATION',
@@ -1126,7 +1135,9 @@ async def notify_admins_about_ticket_reply(ticket: Ticket, reply_text: str, db: 
             return
 
         service = AdminNotificationService(bot)
-        result = await service.send_ticket_event_notification(notification_text, None)
+        result = await service.send_ticket_event_notification(
+            notification_text, None, media_file_id=media_file_id, media_type=media_type
+        )
         logger.info('Ticket # reply notification sent', ticket_id=ticket.id, result=result)
     except Exception as e:
         logger.error('Error notifying admins about ticket reply', error=e)
