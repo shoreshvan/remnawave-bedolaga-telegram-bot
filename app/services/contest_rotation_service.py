@@ -323,10 +323,6 @@ class ContestRotationService:
         channel_id_raw = settings.CHANNEL_SUB_ID
         if not channel_id_raw:
             return
-        try:
-            channel_id = int(channel_id_raw)
-        except Exception:
-            channel_id = channel_id_raw
 
         keyboard = InlineKeyboardMarkup(
             inline_keyboard=[
@@ -342,7 +338,7 @@ class ContestRotationService:
                 reply_markup=keyboard,
             )
         except Exception as exc:
-            logger.error('Не удалось отправить анонс в канал', channel_id_raw=channel_id_raw, exc=exc)
+            logger.error('Не удалось отправить анонс в канал', channel_id=channel_id, exc=exc)
 
     async def _broadcast_to_users(self, text: str) -> None:
         """Отправляет анонс всем пользователям с активной/триальной подпиской."""

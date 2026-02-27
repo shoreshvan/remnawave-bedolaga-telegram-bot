@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import json
 import math
 import re
 from collections.abc import Collection
 from datetime import UTC, datetime, timedelta
 from decimal import ROUND_FLOOR, ROUND_HALF_UP, ROUND_UP, Decimal, InvalidOperation
-from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
@@ -205,17 +203,6 @@ router = APIRouter()
 
 promo_code_service = PromoCodeService()
 renewal_service = SubscriptionRenewalService()
-
-# Кешированный Bot для проверки подписки на канал (снижает нагрузку)
-_channel_check_bot: Bot | None = None
-
-
-def _get_channel_check_bot() -> Bot:
-    """Получить или создать Bot для проверки подписки на канал."""
-    global _channel_check_bot
-    if _channel_check_bot is None:
-        _channel_check_bot = Bot(token=settings.BOT_TOKEN)
-    return _channel_check_bot
 
 
 _CRYPTOBOT_MIN_USD = 1.0
@@ -3101,11 +3088,8 @@ async def get_subscription_details(
         ) from None
 
     # Check required channel subscription
-    if settings.CHANNEL_IS_REQUIRED_SUB and settings.CHANNEL_SUB_ID:
-        try:
-            bot = _get_channel_check_bot()
-            chat_member = await bot.get_chat_member(chat_id=settings.CHANNEL_SUB_ID, user_id=telegram_id)
-            # Не закрываем сессию - бот переиспользуется
+    if settings.CHANNEL_IS_REQUIRED_SUB:
+        from app.services.channel_subscription_service import channel_subscription_service
 
             if chat_member.status not in ['member', 'administrator', 'creator']:
                 raise HTTPException(

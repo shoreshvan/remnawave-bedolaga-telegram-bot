@@ -10,7 +10,7 @@ from app.database.models import User
 from app.external.ban_system_api import BanSystemAPI, BanSystemAPIError
 from app.localization.texts import get_texts
 
-from ..dependencies import get_current_admin_user
+from ..dependencies import require_permission
 from ..schemas.ban_system import (
     BanAgentHistoryItem,
     BanAgentHistoryResponse,
@@ -128,7 +128,7 @@ async def _api_request(api: BanSystemAPI, method: str, *args, texts=None, **kwar
 
 @router.get('/status', response_model=BanSystemStatusResponse)
 async def get_ban_system_status(
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanSystemStatusResponse:
     """Get Ban System integration status."""
     return BanSystemStatusResponse(
@@ -142,7 +142,7 @@ async def get_ban_system_status(
 
 @router.get('/stats/raw')
 async def get_stats_raw(
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> dict:
     """Get raw stats from Ban System API for debugging."""
     api = _get_ban_api()
@@ -152,7 +152,7 @@ async def get_stats_raw(
 
 @router.get('/stats', response_model=BanSystemStatsResponse)
 async def get_stats(
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanSystemStatsResponse:
     """Get overall Ban System statistics."""
     from datetime import datetime
@@ -206,7 +206,7 @@ async def get_users(
     offset: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     status: str | None = Query(None, description='Filter: over_limit, with_limit, unlimited'),
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanUsersListResponse:
     """Get list of users from Ban System."""
     api = _get_ban_api()
@@ -236,7 +236,7 @@ async def get_users(
 @router.get('/users/over-limit', response_model=BanUsersListResponse)
 async def get_users_over_limit(
     limit: int = Query(50, ge=1, le=100),
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanUsersListResponse:
     """Get users who exceeded their device limit."""
     api = _get_ban_api()
@@ -266,7 +266,7 @@ async def get_users_over_limit(
 @router.get('/users/search/{query}')
 async def search_users(
     query: str,
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanUsersListResponse:
     """Search for users."""
     api = _get_ban_api()
@@ -297,7 +297,7 @@ async def search_users(
 @router.get('/users/{email}', response_model=BanUserDetailResponse)
 async def get_user_detail(
     email: str,
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanUserDetailResponse:
     """Get detailed user information."""
     api = _get_ban_api()
@@ -350,7 +350,7 @@ async def get_user_detail(
 
 @router.get('/punishments', response_model=BanPunishmentsListResponse)
 async def get_punishments(
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanPunishmentsListResponse:
     """Get list of active punishments (bans)."""
     api = _get_ban_api()
@@ -385,7 +385,7 @@ async def get_punishments(
 @router.post('/punishments/{user_id}/unban', response_model=UnbanResponse)
 async def unban_user(
     user_id: str,
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:unban')),
 ) -> UnbanResponse:
     """Unban (enable) a user."""
     texts = _get_admin_texts(admin)
@@ -406,7 +406,7 @@ async def unban_user(
 @router.post('/ban', response_model=UnbanResponse)
 async def ban_user(
     request: BanUserRequest,
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:ban')),
 ) -> UnbanResponse:
     """Manually ban a user."""
     texts = _get_admin_texts(admin)
@@ -434,7 +434,7 @@ async def ban_user(
 async def get_punishment_history(
     query: str,
     limit: int = Query(20, ge=1, le=100),
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanHistoryResponse:
     """Get punishment history for a user."""
     api = _get_ban_api()
@@ -471,7 +471,7 @@ async def get_punishment_history(
 
 @router.get('/nodes', response_model=BanNodesListResponse)
 async def get_nodes(
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanNodesListResponse:
     """Get list of connected nodes."""
     api = _get_ban_api()
@@ -513,7 +513,7 @@ async def get_agents(
     search: str | None = Query(None),
     health: str | None = Query(None, description='healthy, warning, critical'),
     agent_status: str | None = Query(None, alias='status', description='online, offline'),
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanAgentsListResponse:
     """Get list of monitoring agents."""
     api = _get_ban_api()
@@ -612,7 +612,7 @@ async def get_agents(
 
 @router.get('/agents/summary', response_model=BanAgentsSummary)
 async def get_agents_summary(
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanAgentsSummary:
     """Get agents summary statistics."""
     api = _get_ban_api()
@@ -636,7 +636,7 @@ async def get_agents_summary(
 @router.get('/traffic/violations', response_model=BanTrafficViolationsResponse)
 async def get_traffic_violations(
     limit: int = Query(50, ge=1, le=100),
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanTrafficViolationsResponse:
     """Get list of traffic limit violations."""
     api = _get_ban_api()
@@ -670,7 +670,7 @@ async def get_traffic_violations(
 
 @router.get('/traffic', response_model=BanTrafficResponse)
 async def get_traffic(
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanTrafficResponse:
     """Get full traffic statistics including top users."""
     api = _get_ban_api()
@@ -714,7 +714,7 @@ async def get_traffic(
 @router.get('/traffic/top')
 async def get_traffic_top(
     limit: int = Query(20, ge=1, le=100),
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> list[BanTrafficTopItem]:
     """Get top users by traffic."""
     api = _get_ban_api()
@@ -777,7 +777,7 @@ def _parse_setting_response(key: str, data: Any, default_type: str = 'str') -> B
 
 @router.get('/settings', response_model=BanSettingsResponse)
 async def get_settings(
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanSettingsResponse:
     """Get all Ban System settings."""
     api = _get_ban_api()
@@ -835,7 +835,7 @@ async def get_settings(
 @router.get('/settings/{key}')
 async def get_setting(
     key: str,
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanSettingDefinition:
     """Get a specific setting."""
     api = _get_ban_api()
@@ -848,7 +848,7 @@ async def get_setting(
 async def set_setting(
     key: str,
     value: str = Query(...),
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:edit')),
 ) -> BanSettingDefinition:
     """Set a setting value."""
     api = _get_ban_api()
@@ -862,7 +862,7 @@ async def set_setting(
 @router.post('/settings/{key}/toggle')
 async def toggle_setting(
     key: str,
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:edit')),
 ) -> BanSettingDefinition:
     """Toggle a boolean setting."""
     api = _get_ban_api()
@@ -879,7 +879,7 @@ async def toggle_setting(
 @router.post('/settings/whitelist/add', response_model=UnbanResponse)
 async def whitelist_add(
     request: BanWhitelistRequest,
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:edit')),
 ) -> UnbanResponse:
     """Add user to whitelist."""
     texts = _get_admin_texts(admin)
@@ -903,7 +903,7 @@ async def whitelist_add(
 @router.post('/settings/whitelist/remove', response_model=UnbanResponse)
 async def whitelist_remove(
     request: BanWhitelistRequest,
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:edit')),
 ) -> UnbanResponse:
     """Remove user from whitelist."""
     texts = _get_admin_texts(admin)
@@ -930,7 +930,7 @@ async def whitelist_remove(
 @router.get('/report', response_model=BanReportResponse)
 async def get_report(
     hours: int = Query(24, ge=1, le=168),
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanReportResponse:
     """Get period report."""
     api = _get_ban_api()
@@ -960,7 +960,7 @@ async def get_report(
 
 @router.get('/health', response_model=BanHealthResponse)
 async def get_health(
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanHealthResponse:
     """Get Ban System health status."""
     api = _get_ban_api()
@@ -994,7 +994,7 @@ async def get_health(
 
 @router.get('/health/detailed', response_model=BanHealthDetailedResponse)
 async def get_health_detailed(
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanHealthDetailedResponse:
     """Get detailed health information."""
     api = _get_ban_api()
@@ -1014,7 +1014,7 @@ async def get_health_detailed(
 async def get_agent_history(
     node_name: str,
     hours: int = Query(24, ge=1, le=168),
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanAgentHistoryResponse:
     """Get agent statistics history."""
     api = _get_ban_api()
@@ -1050,7 +1050,7 @@ async def get_agent_history(
 async def get_user_punishment_history(
     email: str,
     limit: int = Query(20, ge=1, le=100),
-    admin: User = Depends(get_current_admin_user),
+    admin: User = Depends(require_permission('ban_system:read')),
 ) -> BanHistoryResponse:
     """Get punishment history for a specific user."""
     api = _get_ban_api()

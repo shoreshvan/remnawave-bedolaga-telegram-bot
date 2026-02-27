@@ -1,3 +1,4 @@
+import html
 from datetime import datetime
 
 import structlog
