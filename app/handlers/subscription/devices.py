@@ -832,6 +832,7 @@ async def handle_devices_page(callback: types.CallbackQuery, db_user: User, db: 
 
 async def handle_single_device_reset(callback: types.CallbackQuery, db_user: User, db: AsyncSession):
     texts = get_texts(db_user.language)
+
     try:
         callback_parts = callback.data.split('_')
         if len(callback_parts) < 4:

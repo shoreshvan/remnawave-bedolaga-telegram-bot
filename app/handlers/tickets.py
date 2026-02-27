@@ -1055,6 +1055,24 @@ async def notify_admins_about_new_ticket(ticket: Ticket, db: AsyncSession):
             created_at=format_local_datetime(ticket.created_at, '%d.%m.%Y %H:%M'),
         )
 
+        notification_text = texts.t(
+            'ADMIN_TICKET_NEW_NOTIFICATION',
+            '🎫 <b>НОВЫЙ ТИКЕТ</b>\n\n'
+            '🆔 <b>ID:</b> <code>{ticket_id}</code>\n'
+            '👤 <b>Пользователь:</b> {full_name}\n'
+            '🆔 <b>ID:</b> <code>{telegram_id}</code>\n'
+            '📱 <b>Username:</b> @{username}\n'
+            '📝 <b>Заголовок:</b> {title}\n'
+            '📅 <b>Создан:</b> {created_at}\n',
+        ).format(
+            ticket_id=ticket.id,
+            full_name=full_name,
+            telegram_id=telegram_id_display,
+            username=username_display,
+            title=title or '—',
+            created_at=format_local_datetime(ticket.created_at, '%d.%m.%Y %H:%M'),
+        )
+
         if message_preview:
             notification_text += f'\n📩 <b>Сообщение:</b>\n{message_preview}\n'
 
@@ -1107,7 +1125,8 @@ async def notify_admins_about_ticket_reply(
             user.username if user and user.username else texts.t('ADMIN_TICKET_USERNAME_MISSING', 'отсутствует')
         )
 
-        reply_preview = reply_text[:200] + '...' if len(reply_text) > 200 else reply_text
+        # Обрезаем текст ответа для уведомления
+        reply_preview = reply_text[:150] + '...' if len(reply_text) > 150 else reply_text
 
         notification_text = texts.t(
             'ADMIN_TICKET_REPLY_NOTIFICATION',
